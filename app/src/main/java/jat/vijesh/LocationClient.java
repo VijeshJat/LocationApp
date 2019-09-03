@@ -205,9 +205,8 @@ public class LocationClient {
     }
 
 
-    private GeofencingRequest getGeofencingRequest(double latitude, double longitude, float radius) {
+    private GeofencingRequest getGeofencingRequest(String geofenceId, double latitude, double longitude, float radius) {
 
-        String geofenceId = UUID.randomUUID().toString();
         List<Geofence> geofenceList = new ArrayList<>();
 
         geofenceList.add(new Geofence.Builder()
@@ -245,7 +244,9 @@ public class LocationClient {
 
         if (checkLocationPermission()) {
 
-            geofencingClient.addGeofences(getGeofencingRequest(latitude, longitude, radius), getGeofencePendingIntent())
+            final String geofenceId = UUID.randomUUID().toString();
+
+            geofencingClient.addGeofences(getGeofencingRequest(geofenceId,latitude, longitude, radius), getGeofencePendingIntent())
                     .addOnSuccessListener(((Activity) context), new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
@@ -269,7 +270,7 @@ public class LocationClient {
 
                             }else {
 
-                                final String geofenceId = UUID.randomUUID().toString();
+
                                 mUserPreference.setGeoFenceId(geofenceId);
                                 mUserPreference.savePreference(context);
                             }

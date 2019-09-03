@@ -14,11 +14,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MapActivity"></activity>
 
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDqzdcBwrzpeKN9yRw0tZNdlXIYrUUJkuI" />
+        <activity android:name=".MapActivity"/>
+
 
         <activity android:name=".MainActivity">
             <intent-filter>
@@ -27,6 +25,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
+        <receiver android:name=".GeofenceBroadcastReceiver" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDqzdcBwrzpeKN9yRw0tZNdlXIYrUUJkuI" />
+
     </application>
 
 </manifest>
