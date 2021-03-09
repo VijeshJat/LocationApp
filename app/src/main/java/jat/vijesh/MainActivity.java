@@ -1,13 +1,18 @@
 package jat.vijesh;
 
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationResult;
@@ -17,7 +22,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-
+    private int FINE_LOCATION_ACCESS_REQUEST_CODE = 10001;
+    private int BACKGROUND_LOCATION_ACCESS_REQUEST_CODE = 10002;
     private UserPreference mUserPreference;
     private LocationClient locationClient;
     private LocationCallback mLocationCallback = new LocationCallback() {
@@ -53,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btnRequestLocationUpdate).setOnClickListener(this);
         findViewById(R.id.btnAddGeoFence).setOnClickListener(this);
         findViewById(R.id.btnMapScreen).setOnClickListener(this);
+        findViewById(R.id.btnRemoveGeofence).setOnClickListener(this);
 
 
     }
@@ -86,11 +93,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
 
+            case R.id.btnRemoveGeofence:
+
+                locationClient.removeGeoFenceCircle(mUserPreference.getGeoFenceId());
+
+                break;
+
+
             case R.id.btnAddGeoFence:
 
 
                 if (mUserPreference.getGeoFenceId().isEmpty()) {
-                    locationClient.addGeoFenceCircle(mUserPreference.getCurrentLatitude(), mUserPreference.getCurrentLongitude(), 400);
+
+                   /* if (Build.VERSION.SDK_INT >= 29) {
+                        //We need background permission
+                        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                            locationClient.addGeoFenceCircle(mUserPreference.getCurrentLatitude(), mUserPreference.getCurrentLongitude(), 400);
+
+                        } else {
+                            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                                //We show a dialog and ask for permission
+                                ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_ACCESS_REQUEST_CODE);
+                            } else {
+                                ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_ACCESS_REQUEST_CODE);
+                            }
+                        }
+
+                    } else {*/
+                        locationClient.addGeoFenceCircle(mUserPreference.getCurrentLatitude(), mUserPreference.getCurrentLongitude(), 400);
+
+                  //  }
                 }
 
                 break;

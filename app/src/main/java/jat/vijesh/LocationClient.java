@@ -29,6 +29,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -42,6 +43,7 @@ import java.util.UUID;
 public class LocationClient {
 
 
+    private GeofenceHelper geofenceHelper;
     private FusedLocationProviderClient fusedLocationClient;
     private GeofencingClient geofencingClient;
 
@@ -64,6 +66,8 @@ public class LocationClient {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
         geofencingClient = LocationServices.getGeofencingClient(context);
         mUserPreference = UserPreference.getInstance(context);
+
+        geofenceHelper = new GeofenceHelper(context);
 
     }
 
@@ -196,48 +200,12 @@ public class LocationClient {
 
         if (mLocationRequest == null) {
             mLocationRequest = LocationRequest.create();
-            mLocationRequest.setInterval(30000);
+            mLocationRequest.setInterval(10000);
             //   mLocationRequest.setFastestInterval(5000);
             mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         }
 
         return mLocationRequest;
-    }
-
-
-    private GeofencingRequest getGeofencingRequest(String geofenceId, double latitude, double longitude, float radius) {
-
-        List<Geofence> geofenceList = new ArrayList<>();
-
-        geofenceList.add(new Geofence.Builder()
-                .setRequestId(geofenceId)
-                .setCircularRegion(latitude, longitude, radius)  //22.699892, 75.866035
-                .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
-                .build());
-
-
-        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
-        builder.addGeofences(geofenceList);
-
-        return builder.build();
-    }
-
-
-    private PendingIntent geoFencePendingIntent;
-
-    private PendingIntent getGeofencePendingIntent() {
-        // Reuse the PendingIntent if we already have it.
-
-        if (geoFencePendingIntent != null) {
-            return geoFencePendingIntent;
-        }
-        Intent intent = new Intent(context, GeofenceBroadcastReceiver.class);
-        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
-        // calling addGeofences() and removeGeofences().
-        geoFencePendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        return geoFencePendingIntent;
     }
 
     public void addGeoFenceCircle(final double latitude, final double longitude, float radius) {
@@ -246,78 +214,54 @@ public class LocationClient {
 
             final String geofenceId = UUID.randomUUID().toString();
 
-            geofencingClient.addGeofences(getGeofencingRequest(geofenceId,latitude, longitude, radius), getGeofencePendingIntent())
-                    .addOnSuccessListener(((Activity) context), new OnSuccessListener<Void>() {
+
+            Geofence geofence = geofenceHelper.getGeofence(geofenceId, new LatLng(latitude, longitude), radius, Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_DWELL | Geofence.GEOFENCE_TRANSITION_EXIT);
+            GeofencingRequest geofencingRequest = geofenceHelper.getGeofencingRequest(geofence);
+            PendingIntent pendingIntent = geofenceHelper.getPendingIntent();
+
+            geofencingClient.addGeofences(geofencingRequest, pendingIntent)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-
 
                             Utility.writeLogFileToDevice(context, "Geo Fence Added Successfully");
                             Log.d("TESTING", " Geo Fence Added Successfully ");
 
                             mUserPreference.setGeoFenceLatitude(latitude);
                             mUserPreference.setGeoFenceLongitude(longitude);
+                            mUserPreference.setGeoFenceId(geofenceId);
                             mUserPreference.savePreference(context);
 
 
-                            if (!mUserPreference.getGeoFenceId().isEmpty()) {
-                                //remove
-
-                                List<String> geofenceIds = new ArrayList<>();
-                                geofenceIds.add(UserPreference.getInstance(context).getGeoFenceId());
-
-                                removeGeoFenceCircle(geofenceIds, mUserPreference.getGeoFenceId());
-
-                            }else {
-
-
-                                mUserPreference.setGeoFenceId(geofenceId);
-                                mUserPreference.savePreference(context);
-                            }
-
                         }
                     })
-                    .addOnFailureListener(((Activity) context), new OnFailureListener() {
+                    .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            Utility.writeLogFileToDevice(context, "Geo Fence Add onFailure ");
-                            Log.d("TESTING", " Geo Fence addOnFailureListener  ");
-
-                            LocationManager manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-                            if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-                                Log.e("Provider", "Provider is not avaible");
-                            }
-                            if (!manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-                                Log.e("Network Provider", "Provider is not avaible");
-                            }
-
-                            if (!mUserPreference.getGeoFenceId().isEmpty()) {
-
-                                List<String> geofenceIds = new ArrayList<>();
-                                geofenceIds.add(UserPreference.getInstance(context).getGeoFenceId());
-                                removeGeoFenceCircle(geofenceIds, mUserPreference.getGeoFenceId());
-
-                            }
-
+                            String errorMessage = geofenceHelper.getErrorString(e);
+                            Log.d("TAG", "onFailure: " + errorMessage);
                             mUserPreference.setGeoFenceId("");
                             mUserPreference.savePreference(context);
                         }
                     });
+
         }
 
     }
 
 
-    public void removeGeoFenceCircle(List<String> geoFenceIds, final String geofenceId) {
+    public void removeGeoFenceCircle(String geofenceId) {
 
         if (checkLocationPermission()) {
 
-            geofencingClient.removeGeofences(geoFenceIds)
+            List<String> geofenceIds = new ArrayList<>();
+            geofenceIds.add(geofenceId);
+            geofencingClient.removeGeofences(geofenceIds)
                     .addOnSuccessListener(((Activity) context), new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
 
-                            mUserPreference.setGeoFenceId(geofenceId);
+                            mUserPreference.setGeoFenceId("");
                             mUserPreference.savePreference(context);
 
                             Utility.writeLogFileToDevice(context, " Geo Fence Remove onSuccess ");

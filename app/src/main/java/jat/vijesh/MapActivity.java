@@ -26,6 +26,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private UserPreference mUserPreference;
     private LocationClient locationClient;
     private GoogleMap map;
+    private  Marker mMarker;
 
     private LocationCallback mLocationCallback = new LocationCallback() {
         @Override
@@ -63,6 +64,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mUserPreference = UserPreference.getInstance(this);
         locationClient.startLocationUpdates(locationClient.createLocationRequest(), mLocationCallback);
 
+        setUpGeoFenceMap();
+
+        //mapGeofence
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
@@ -70,7 +74,33 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     }
 
-    Marker mMarker;
+    private void setUpGeoFenceMap() {
+        SupportMapFragment mapGeofence = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.mapGeofence);
+
+
+        mapGeofence.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+
+                if (mUserPreference.getGeoFenceLatitude() > 0 && mUserPreference.getGeoFenceLongitude() > 0) {
+
+                    LatLng positionGeoFence = new LatLng(mUserPreference.getGeoFenceLatitude(), mUserPreference.getGeoFenceLongitude());
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(positionGeoFence, 16.0f));
+                    CircleOptions circleOptions = drawMarkerCircle(positionGeoFence, googleMap, 400);
+                    try {
+                        if (circleOptions != null)
+                            googleMap.addCircle(circleOptions);
+                    } catch (Exception e) {
+
+                    }
+
+                }
+
+            }
+        });
+    }
+
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -82,20 +112,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMarker = map.addMarker(new MarkerOptions().position(position));
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 16.0f));
 
-
-        if (mUserPreference.getGeoFenceLatitude() > 0 && mUserPreference.getGeoFenceLongitude() > 0) {
-
-            LatLng positionGeoFence = new LatLng(mUserPreference.getGeoFenceLatitude(), mUserPreference.getGeoFenceLongitude());
-
-            CircleOptions circleOptions = drawMarkerCircle(positionGeoFence, map, 400);
-            try {
-                if (circleOptions != null)
-                    map.addCircle(circleOptions);
-            } catch (Exception e) {
-
-            }
-
-        }
 
     }
 

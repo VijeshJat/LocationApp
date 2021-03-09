@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".MapActivity"/>
+        <activity android:name=".MapActivity" />
 
 
         <activity android:name=".MainActivity">
@@ -27,7 +27,10 @@
         </activity>
 
 
-        <receiver android:name=".GeofenceBroadcastReceiver" />
+        <receiver
+            android:name=".GeofenceBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
