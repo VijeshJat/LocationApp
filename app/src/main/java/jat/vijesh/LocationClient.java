@@ -196,12 +196,31 @@ public class LocationClient {
 
     }
 
+    protected LocationRequest updateLocationRequest(long interval , long fastedInterval) {
+
+        if (mLocationRequest == null) {
+            mLocationRequest = LocationRequest.create();
+            mLocationRequest.setInterval(interval);
+            mLocationRequest.setFastestInterval(fastedInterval);
+          //  mLocationRequest.setSmallestDisplacement(15);
+            mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        }else {
+            mLocationRequest.setInterval(interval);
+            mLocationRequest.setFastestInterval(fastedInterval);
+           // mLocationRequest.setSmallestDisplacement(15);
+            mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        }
+
+        return mLocationRequest;
+    }
+
     protected LocationRequest createLocationRequest() {
 
         if (mLocationRequest == null) {
             mLocationRequest = LocationRequest.create();
-            mLocationRequest.setInterval(10000);
-            //   mLocationRequest.setFastestInterval(5000);
+            mLocationRequest.setInterval(4000);
+            mLocationRequest.setFastestInterval(4000);
+          //  mLocationRequest.setSmallestDisplacement(15);
             mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         }
 
