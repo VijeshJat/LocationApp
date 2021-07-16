@@ -17,6 +17,7 @@
 
         <activity android:name=".MapActivity" />
 
+        <activity android:name=".DrawPolygoneActivity" />
 
         <activity android:name=".MainActivity">
             <intent-filter>

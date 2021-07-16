@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btnAddGeoFence).setOnClickListener(this);
         findViewById(R.id.btnMapScreen).setOnClickListener(this);
         findViewById(R.id.btnRemoveGeofence).setOnClickListener(this);
+        findViewById(R.id.btnDrawPolygone).setOnClickListener(this);
 
 
     }
@@ -133,6 +134,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
 
+            case R.id.btnDrawPolygone:
+
+                startActivity(new Intent(this, DrawPolygoneActivity.class));
+
+                break;
 
         }
 
